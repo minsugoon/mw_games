@@ -1,0 +1,664 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Consecutive Limit (Both)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* 시작 화면 */
+        .start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(18, 18, 18, 0.98);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s;
+            padding: 20px;
+        }
+
+        .main-title {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #ff6b6b, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+
+        .sub-title {
+            color: #aaa;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #fff 0%, #ddd 100%);
+            color: #000;
+            border: none;
+            padding: 15px 50px;
+            font-size: 1.3rem;
+            font-weight: 900;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+            animation: pulse 2s infinite;
+            margin-bottom: 30px;
+        }
+
+        /* 규칙 박스 */
+        .rules-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            width: 100%;
+            max-width: 360px;
+            font-size: 0.85rem;
+            color: #ddd;
+            line-height: 1.5;
+        }
+
+            .rules-box h3 {
+                margin: 0 0 10px 0;
+                font-size: 1rem;
+                color: #ff6b6b;
+                text-align: center;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+                padding-bottom: 8px;
+            }
+
+        .rules-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+            .rules-list li {
+                margin-bottom: 8px;
+                display: flex;
+                align-items: flex-start;
+            }
+
+        .rules-icon {
+            margin-right: 8px;
+            min-width: 20px;
+        }
+
+        .alert-text {
+            color: #ff6b6b;
+            font-weight: bold;
+            font-size: 0.95em;
+            margin-top: 2px;
+            display: block;
+        }
+
+        /* 게임 UI */
+        .game-board {
+            width: 90%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+            .game-board.visible {
+                opacity: 1;
+            }
+
+        .header {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .round-badge {
+            background: #333;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #aaa;
+            font-weight: bold;
+        }
+
+        .pot-container {
+            background: linear-gradient(135deg, #2c3e50, #000000);
+            border: 1px solid #444;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.1);
+            margin-bottom: 5px;
+        }
+
+        .pot-label {
+            color: #ffd700;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .pot-value {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            background: #1e1e1e;
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+
+        .player-info {
+            text-align: center;
+            flex: 1;
+        }
+
+        .p-name {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .p-score {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .color-me {
+            color: #4facfe;
+        }
+
+        .color-cpu {
+            color: #ff6b6b;
+        }
+
+        .status-msg {
+            text-align: center;
+            min-height: 30px;
+            color: #ccc;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: -5px;
+        }
+
+        /* 버튼 및 경고 영역 */
+        .action-area {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .warning-box {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #888;
+            min-height: 20px;
+        }
+
+        .warning-active {
+            color: #ff6b6b;
+            font-weight: bold;
+            animation: flash 1s infinite;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            height: 80px;
+        }
+
+        .btn {
+            flex: 1;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.1s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.2;
+        }
+
+            .btn:disabled {
+                opacity: 0.3;
+                filter: grayscale(100%);
+                cursor: not-allowed !important;
+                transform: none !important;
+                background: #333;
+                color: #555;
+                box-shadow: none;
+            }
+
+            .btn span {
+                font-size: 0.7rem;
+                font-weight: normal;
+                opacity: 0.8;
+                margin-top: 4px;
+            }
+
+            .btn:active:not(:disabled) {
+                transform: scale(0.96);
+                opacity: 0.9;
+            }
+
+        .btn-we {
+            background: #4facfe;
+            color: #001e38;
+        }
+
+        .btn-me {
+            background: #ff6b6b;
+            color: #380000;
+        }
+
+        .log-area {
+            height: 120px;
+            overflow-y: auto;
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.85rem;
+        }
+
+        .log-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #222;
+        }
+
+        .reset-btn {
+            margin-top: 15px;
+            background: transparent;
+            border: 1px solid #444;
+            color: #666;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            opacity: 0;
+            transition: opacity 0.5s;
+            cursor: pointer;
+        }
+
+            .reset-btn.visible {
+                opacity: 1;
+            }
+
+        .hidden {
+            display: none !important;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes flash {
+            0%, 100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen" class="start-screen">
+        <h1 class="main-title">ME or WE</h1>
+        <p class="sub-title">쌍방 연속 제한 (Dual Cooldown) Ver.</p>
+
+        <button class="btn-start" onclick="startGame()">GAME START</button>
+
+        <div class="rules-box">
+            <h3>📜 게임 규칙</h3>
+            <ul class="rules-list">
+                <li>
+                    <span class="rules-icon">⚖️</span>
+                    <div><strong>쌍방 쿨타임 적용:</strong><br><span class="alert-text">나와 AI 모두</span> 배신(ME)을 2회 연속하면, 다음 판은 무조건 협력(WE)해야 합니다.</div>
+                </li>
+                <li>
+                    <span class="rules-icon">🤖</span>
+                    <div><strong>복수하는 AI:</strong><br>당신이 배신하면, AI는 다음 턴에 복수합니다.</div>
+                </li>
+                <li>
+                    <span class="rules-icon">💥</span>
+                    <div><strong>배신 실패 (ME & ME):</strong><br>둘 다 라운드 추가 점수(Pot) 획득 불가 (0점)</div>
+                </li>
+                <li>
+                    <span class="rules-icon">🤝</span>
+                    <div><strong>WE & WE:</strong> 각자 3점 + 라운드 점수</div>
+                </li>
+                <li>
+                    <span class="rules-icon">😈</span>
+                    <div><strong>배신 성공:</strong> 승자(5 + 라운드점수) / 패자 0점</div>
+                </li>
+                <li>
+                    <div><strong>만든 이:</strong> 방구석 민수군</div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="header" id="game-header">
+        <span class="round-badge" id="round-badge">ROUND 1 / 10</span>
+    </div>
+
+    <div class="game-board" id="game-board">
+        <div class="pot-container">
+            <span class="pot-label">이번 라운드 추가 점수</span>
+            <div class="pot-value" id="current-pot">?</div>
+        </div>
+
+        <div class="score-board">
+            <div class="player-info">
+                <span class="p-name">PLAYER</span>
+                <span class="p-score color-me" id="p-score">0</span>
+            </div>
+            <div class="player-info">
+                <span class="p-name">CPU</span>
+                <span class="p-score color-cpu" id="c-score">0</span>
+            </div>
+        </div>
+
+        <div class="status-msg" id="status-msg">게임 시작 대기 중...</div>
+
+        <div class="action-area">
+            <div class="warning-box" id="warning-display">
+            </div>
+            <div class="btn-group">
+                <button id="btn-we" class="btn btn-we" onclick="playRound('WE')" disabled>WE<span>협력</span></button>
+                <button id="btn-me" class="btn btn-me" onclick="playRound('ME')" disabled>ME<span>배신</span></button>
+            </div>
+        </div>
+
+        <div class="log-area" id="game-log">
+            <div style="text-align:center; color:#444; padding-top:40px;">기록이 없습니다.</div>
+        </div>
+    </div>
+
+    <button id="reset-btn" class="reset-btn" onclick="resetToStart()">메인으로 돌아가기</button>
+
+    <script>
+        let playerScore = 0;
+        let cpuScore = 0;
+        let currentRound = 1;
+        let currentPot = 0;
+        const maxRounds = 10;
+        let isRolling = false;
+
+        // 연속 제한 관련 변수
+        let playerConsecutiveMe = 0; // 플레이어의 연속 ME 횟수
+        let cpuConsecutiveMe = 0;    // CPU의 연속 ME 횟수 (신규 추가)
+
+        // AI 전략 변수
+        let lastPlayerChoice = null;
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-board').classList.add('visible');
+            document.getElementById('game-header').style.opacity = 1;
+            document.getElementById('reset-btn').classList.add('visible');
+
+            // 변수 초기화
+            playerScore = 0;
+            cpuScore = 0;
+            currentRound = 1;
+            lastPlayerChoice = null;
+            playerConsecutiveMe = 0;
+            cpuConsecutiveMe = 0; // 초기화
+
+            document.getElementById('p-score').innerText = 0;
+            document.getElementById('c-score').innerText = 0;
+            document.getElementById('game-log').innerHTML = '<div style="text-align:center; color:#444; padding-top:40px;">기록이 없습니다.</div>';
+            document.getElementById('warning-display').innerText = "";
+
+            setNextRound();
+        }
+
+        function setNextRound() {
+            const potElement = document.getElementById('current-pot');
+            const msgElement = document.getElementById('status-msg');
+            const warnElement = document.getElementById('warning-display');
+            const btnWe = document.getElementById('btn-we');
+            const btnMe = document.getElementById('btn-me');
+
+            btnWe.disabled = true;
+            btnMe.disabled = true;
+            msgElement.innerText = "점수 추첨 중...";
+            msgElement.style.color = "#ccc";
+            document.getElementById('round-badge').innerText = `ROUND ${currentRound} / ${maxRounds}`;
+
+            let rollCount = 0;
+            isRolling = true;
+            const interval = setInterval(() => {
+                potElement.innerText = "+" + (Math.floor(Math.random() * 10) + 1);
+                rollCount++;
+                if (rollCount > 15) {
+                    clearInterval(interval);
+                    currentPot = Math.floor(Math.random() * 10) + 1;
+                    potElement.innerText = "+" + currentPot;
+                    potElement.style.transform = "scale(1.2)";
+                    setTimeout(() => potElement.style.transform = "scale(1)", 200);
+
+                    // 버튼 상태 결정 로직 (연속 2회 제한 확인)
+                    btnWe.disabled = false; // WE는 항상 가능
+
+                    if (playerConsecutiveMe >= 2) {
+                        // 2회 연속 배신했다면 이번엔 배신 금지
+                        msgElement.innerText = "🚫 배신 불가 (쿨타임)";
+                        msgElement.style.color = "#ff6b6b";
+
+                        warnElement.innerText = "연속 배신으로 인해 이번 턴은 협력(WE)만 가능합니다.";
+                        warnElement.classList.add('warning-active');
+
+                        btnMe.disabled = true; // ME 버튼 잠금
+                    } else {
+                        // 정상 플레이 가능
+                        msgElement.innerText = "선택해주세요.";
+                        btnMe.disabled = false;
+
+                        warnElement.classList.remove('warning-active');
+                        if (playerConsecutiveMe === 1) {
+                            warnElement.innerText = "⚠️ 주의: 이번에 배신하면 다음 턴은 배신할 수 없습니다.";
+                            warnElement.style.color = "#ffaa00";
+                        } else {
+                            warnElement.innerText = "";
+                        }
+                    }
+
+                    isRolling = false;
+                }
+            }, 50);
+        }
+
+        function getCpuChoice() {
+            // [NEW] 0. CPU 쿨타임 체크 (최우선 규칙)
+            // CPU도 2번 연속 배신했으면 무조건 WE를 내야 함
+            if (cpuConsecutiveMe >= 2) {
+                return 'WE';
+            }
+
+            // 1. 복수 전략
+            if (lastPlayerChoice === 'ME') {
+                return 'ME';
+            }
+            // 2. 탐욕 전략 (Pot >= 8 일때 40% 확률)
+            if (currentPot >= 8 && Math.random() < 0.4) {
+                return 'ME';
+            }
+            // 3. 기본 협력 확률
+            return Math.random() < 0.8 ? 'WE' : 'ME';
+        }
+
+        function playRound(playerChoice) {
+            if (isRolling || currentRound > maxRounds) return;
+
+            // 플레이어 연속 카운트 업데이트
+            if (playerChoice === 'ME') {
+                playerConsecutiveMe++;
+            } else {
+                playerConsecutiveMe = 0;
+            }
+
+            const cpuChoice = getCpuChoice();
+            lastPlayerChoice = playerChoice;
+
+            // [NEW] CPU 연속 카운트 업데이트
+            if (cpuChoice === 'ME') {
+                cpuConsecutiveMe++;
+            } else {
+                cpuConsecutiveMe = 0;
+            }
+
+            let pAdd = 0;
+            let cAdd = 0;
+            let msg = "";
+
+            // 점수 계산 로직
+            if (playerChoice === 'WE' && cpuChoice === 'WE') {
+                pAdd = 3 + currentPot;
+                cAdd = 3 + currentPot;
+                msg = "🤝 협력 성공!";
+            } else if (playerChoice === 'ME' && cpuChoice === 'ME') {
+                pAdd = 1;
+                cAdd = 1;
+                msg = "⚔️ 공멸... (추가점수 소멸)";
+            } else if (playerChoice === 'ME' && cpuChoice === 'WE') {
+                pAdd = 5 + currentPot;
+                cAdd = 0;
+                msg = "😈 배신 성공!";
+            } else {
+                pAdd = 0;
+                cAdd = 5 + currentPot;
+                msg = "😭 배신 당함...";
+            }
+
+            playerScore += pAdd;
+            cpuScore += cAdd;
+
+            updateUI(playerChoice, cpuChoice, pAdd, cAdd, msg);
+            currentRound++;
+
+            if (currentRound <= maxRounds) {
+                setTimeout(setNextRound, 1200);
+            } else {
+                setTimeout(endGame, 500);
+            }
+        }
+
+        function updateUI(pChoice, cChoice, pAdd, cAdd, msg) {
+            document.getElementById('p-score').innerText = playerScore;
+            document.getElementById('c-score').innerText = cpuScore;
+
+            const msgEl = document.getElementById('status-msg');
+            let msgColor = '#fff';
+            if (pAdd > cAdd) msgColor = '#4facfe';
+            else if (pAdd < cAdd) msgColor = '#ff6b6b';
+            else if (pChoice === 'ME') msgColor = '#ff6b6b';
+
+            msgEl.innerHTML = `<span style="color:${msgColor}">${msg}</span>`;
+
+            const logList = document.getElementById('game-log');
+            if (currentRound === 1) logList.innerHTML = "";
+
+            const logItem = document.createElement('div');
+            logItem.className = 'log-item';
+            logItem.innerHTML = `
+                    <div style="font-size:0.8em; color:#888; width:40px;">R${currentRound}<br><span style="color:#ffd700">+${currentPot}</span></div>
+                    <div style="flex:1; text-align:center;">
+                        <span style="color:${pChoice === 'WE' ? '#4facfe' : '#ff6b6b'}">${pChoice}</span>
+                        vs
+                        <span style="color:${cChoice === 'WE' ? '#4facfe' : '#ff6b6b'}">${cChoice}</span>
+                    </div>
+                    <div style="font-weight:bold; width:60px; text-align:right;">
+                        <span style="color:${pChoice === 'ME' && cChoice === 'ME' ? '#888' : '#4facfe'}">+${pAdd}</span> :
+                        <span style="color:${pChoice === 'ME' && cChoice === 'ME' ? '#888' : '#ff6b6b'}">+${cAdd}</span>
+                    </div>
+                `;
+            logList.insertBefore(logItem, logList.firstChild);
+        }
+
+        function endGame() {
+            document.getElementById('current-pot').innerText = "-";
+            document.getElementById('round-badge').innerText = "GAME OVER";
+            document.getElementById('warning-display').innerText = "";
+            document.getElementById('btn-we').disabled = true;
+            document.getElementById('btn-me').disabled = true;
+
+            let result = "";
+            if (playerScore > cpuScore) result = "🎉 당신의 승리입니다!";
+            else if (playerScore < cpuScore) result = "💀 당신의 패배입니다...";
+            else result = "🤝 무승부입니다.";
+
+            document.getElementById('status-msg').innerHTML = `<strong style="color:#ffd700">${result}</strong>`;
+            alert(`게임 종료!\n나: ${playerScore} vs CPU: ${cpuScore}\n\n${result}`);
+        }
+
+        function resetToStart() {
+            document.getElementById('game-board').classList.remove('visible');
+            document.getElementById('game-header').style.opacity = 0;
+            document.getElementById('reset-btn').classList.remove('visible');
+            setTimeout(() => { document.getElementById('start-screen').classList.remove('hidden'); }, 300);
+        }
+    </script>
+</body>
+</html>
